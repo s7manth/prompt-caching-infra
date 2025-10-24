@@ -1,0 +1,6 @@
+# Example environment variables for local development
+# Copy this file to .dev.vars and fill in your actual values
+
+REDIS_URL=https://your-redis-instance.upstash.io
+REDIS_TOKEN=your_redis_token_here
+SIMILARITY_THRESHOLD=0.85

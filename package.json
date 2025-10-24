@@ -1,0 +1,27 @@
+{
+  "name": "prompt-caching-infra",
+  "version": "1.0.0",
+  "description": "Prompt caching infrastructure using Cloudflare Workers and Redis vector search",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "wrangler dev --test"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "prompt-caching",
+    "redis",
+    "vector-search"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "wrangler": "^4.45.0",
+    "typescript": "^5.9.3",
+    "@types/bun": "latest"
+  },
+  "private": true
+}

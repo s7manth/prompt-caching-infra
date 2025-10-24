@@ -1,0 +1,20 @@
+name = "prompt-caching-infra"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# KV namespace for metadata (cache stats)
+[[kv_namespaces]]
+binding = "CACHE_STATS"
+id = "2ad708a78f3f44bd959f0d2747cb5b0c"  # Replace with: wrangler kv:namespace create CACHE_STATS
+
+# Environment variables (set with: wrangler secret put <NAME>)
+# REDIS_URL - Your Upstash Redis REST URL
+# REDIS_TOKEN - Your Upstash Redis REST token
+# SIMILARITY_THRESHOLD - Optional, defaults to 0.85
+
+[observability]
+enabled = false
