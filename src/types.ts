@@ -6,6 +6,16 @@ export interface Env {
   REDIS_URL: string; // Upstash Redis REST URL
   REDIS_TOKEN: string; // Upstash Redis token
   SIMILARITY_THRESHOLD?: string; // Configurable threshold
+
+  // Cloudflare AI Gateway configuration
+  GATEWAY_ACCOUNT_ID?: string; // Your Cloudflare account ID
+  GATEWAY_NAME?: string; // Gateway name (e.g., "prompt-caching-infra-gateway")
+  CF_GATEWAY_TOKEN?: string; // Cloudflare AI Gateway authorization token
+
+  // API keys for different providers
+  ANTHROPIC_API_KEY?: string; // For Anthropic models
+  OPENAI_API_KEY?: string; // For OpenAI models
+  GOOGLE_AI_STUDIO_TOKEN?: string; // For Google/Gemini models
 }
 
 export interface ChatRequest {

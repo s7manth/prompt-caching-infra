@@ -2,6 +2,172 @@
 
 import { Env, ChatRequest, ChatResponse } from "./types";
 import { PromptCache } from "./cache";
+import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
+
+// Helper function to determine model type and get API key
+function getModelConfig(
+  model: string,
+  env: Env
+): {
+  isWorkersAI: boolean;
+  provider?: string;
+  apiKey?: string;
+} {
+  // Workers AI models start with @cf
+  if (model.startsWith("@cf/")) {
+    return { isWorkersAI: true };
+  }
+
+  // Determine provider from model prefix
+  if (model.startsWith("anthropic/") || model.startsWith("claude-")) {
+    return {
+      isWorkersAI: false,
+      provider: "anthropic",
+      apiKey: env.ANTHROPIC_API_KEY,
+    };
+  }
+
+  if (model.startsWith("openai/") || model.startsWith("gpt-")) {
+    return {
+      isWorkersAI: false,
+      provider: "openai",
+      apiKey: env.OPENAI_API_KEY,
+    };
+  }
+
+  if (model.startsWith("google/") || model.startsWith("gemini-")) {
+    return {
+      isWorkersAI: false,
+      provider: "google",
+      apiKey: env.GOOGLE_AI_STUDIO_TOKEN,
+    };
+  }
+
+  // Default to Workers AI if no prefix matches
+  return { isWorkersAI: true };
+}
+
+// Helper function to call model through gateway
+async function callModelGateway(
+  model: string,
+  prompt: string,
+  maxTokens: number,
+  temperature: number,
+  env: Env
+): Promise<string> {
+  const config = getModelConfig(model, env);
+
+  // For Workers AI models, use env.AI.run with gateway option
+  if (config.isWorkersAI) {
+    const gatewayConfig = env.GATEWAY_NAME
+      ? {
+          gateway: {
+            id: env.GATEWAY_NAME,
+          },
+        }
+      : {};
+
+    const aiResponse = await env.AI.run(
+      model,
+      {
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: maxTokens,
+        temperature: temperature,
+      },
+      gatewayConfig
+    );
+
+    return (
+      aiResponse.response ||
+      aiResponse.result?.response ||
+      JSON.stringify(aiResponse)
+    );
+  }
+
+  // For external providers, use OpenAI client with gateway endpoint
+  if (!config.apiKey) {
+    throw new Error(`API key not configured for provider: ${config.provider}`);
+  }
+
+  if (!env.GATEWAY_ACCOUNT_ID || !env.GATEWAY_NAME) {
+    throw new Error(
+      "Gateway configuration missing. Set GATEWAY_ACCOUNT_ID and GATEWAY_NAME."
+    );
+  }
+
+  const host = "https://gateway.ai.cloudflare.com";
+
+  // Handle Google models - use Google Generative AI SDK
+  if (config.provider === "google") {
+    const endpoint = `/v1/${env.GATEWAY_ACCOUNT_ID}/${env.GATEWAY_NAME}/google-ai-studio`;
+
+    const genAI = new GoogleGenerativeAI(config.apiKey);
+
+    // Extract the actual model name (remove google/ prefix if present)
+    const modelName = model.startsWith("google/") ? model.slice(7) : model;
+
+    const googleModel = genAI.getGenerativeModel(
+      { model: modelName },
+      { baseUrl: host + endpoint }
+    );
+
+    const result = await googleModel.generateContent([prompt]);
+    return result.response.text();
+  }
+
+  // Handle Anthropic models - use Anthropic SDK
+  if (config.provider === "anthropic") {
+    const endpoint = `/v1/${env.GATEWAY_ACCOUNT_ID}/${env.GATEWAY_NAME}/anthropic`;
+
+    const anthropic = new Anthropic({
+      apiKey: config.apiKey,
+      baseURL: host + endpoint,
+    });
+
+    // Extract the actual model name (remove anthropic/ prefix if present)
+    const modelName = model.startsWith("anthropic/") ? model.slice(10) : model;
+
+    const message = await anthropic.messages.create({
+      model: modelName,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: maxTokens,
+      temperature: temperature,
+    });
+
+    return message.content[0].type === "text" ? message.content[0].text : "";
+  }
+
+  // For OpenAI models, use OpenAI SDK with /compat endpoint
+  const endpoint = `/v1/${env.GATEWAY_ACCOUNT_ID}/${env.GATEWAY_NAME}/compat`;
+
+  // Prepare headers - include gateway authorization if provided
+  const headers: Record<string, string> = {};
+  if (env.CF_GATEWAY_TOKEN) {
+    headers["cf-aig-authorization"] = `Bearer ${env.CF_GATEWAY_TOKEN}`;
+  }
+
+  const client = new OpenAI({
+    apiKey: config.apiKey,
+    baseURL: host + endpoint,
+    defaultHeaders: headers,
+  });
+
+  // Ensure model name has the provider prefix for gateway routing
+  let modelName = model;
+  if (!modelName.startsWith("openai/")) {
+    modelName = `openai/${modelName}`;
+  }
+
+  const response = await client.chat.completions.create({
+    model: modelName,
+    messages: [{ role: "user", content: prompt }],
+    max_completion_tokens: maxTokens,
+  });
+
+  return response.choices[0]?.message?.content || "";
+}
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -99,23 +265,20 @@ export default {
           return Response.json(response, { headers: corsHeaders });
         }
 
-        // Cache miss - call Workers AI
-        console.log("Cache miss - calling Workers AI");
+        // Cache miss - call model through gateway
+        console.log(`Cache miss - calling model ${model} through gateway`);
 
         // Update miss count
         const misses = parseInt((await env.CACHE_STATS.get("misses")) || "0");
         await env.CACHE_STATS.put("misses", (misses + 1).toString());
 
-        const aiResponse = await env.AI.run(model, {
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: maxTokens,
-          temperature: temperature,
-        });
-
-        const responseText =
-          aiResponse.response ||
-          aiResponse.result?.response ||
-          JSON.stringify(aiResponse);
+        const responseText = await callModelGateway(
+          model,
+          prompt,
+          maxTokens,
+          temperature,
+          env
+        );
 
         // Cache the response
         await cache.cacheResponse(prompt, responseText, model);

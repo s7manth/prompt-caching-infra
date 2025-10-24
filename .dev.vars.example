@@ -4,3 +4,13 @@
 REDIS_URL=https://your-redis-instance.upstash.io
 REDIS_TOKEN=your_redis_token_here
 SIMILARITY_THRESHOLD=0.85
+
+# Cloudflare AI Gateway Configuration
+GATEWAY_ACCOUNT_ID=your_cloudflare_account_id
+GATEWAY_NAME=prompt-caching-infra-gateway
+CF_GATEWAY_TOKEN=your_cloudflare_gateway_token
+
+# API Keys for External Providers (required for non-Workers AI models)
+ANTHROPIC_API_KEY=your_anthropic_api_key
+OPENAI_API_KEY=your_openai_api_key
+GOOGLE_AI_STUDIO_TOKEN=your_google_ai_studio_token
