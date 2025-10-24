@@ -9,26 +9,17 @@ A lightweight, semantic prompt caching system built with Cloudflare Workers, Wor
 - **Redis (Upstash)**: Vector storage for semantic similarity search
 - **Cloudflare KV**: Metadata storage for cache statistics
 
-## Features
-
-- 🚀 Semantic caching using vector similarity
-- ⚡ Sub-second cache hits
-- 🎯 Configurable similarity threshold (default: 0.85)
-- 📊 Built-in cache statistics
-- 🔧 Simple REST API
-
 ## Setup
 
 ### 1. Prerequisites
 
-- Node.js 18+ and npm
 - Cloudflare account (Workers AI enabled)
 - Upstash Redis account (free tier works)
 
 ### 2. Install Dependencies
 
 ```bash
-npm install
+bun install
 ```
 
 ### 3. Configure Upstash Redis
@@ -40,7 +31,7 @@ npm install
 ### 4. Create Cloudflare KV Namespace
 
 ```bash
-npx wrangler kv:namespace create CACHE_STATS
+bunx wrangler kv:namespace create CACHE_STATS
 ```
 
 Copy the generated `id` and update `wrangler.toml`:
@@ -54,23 +45,23 @@ id = "your_generated_id_here"
 ### 5. Set Environment Secrets
 
 ```bash
-npx wrangler secret put REDIS_URL
+bunx wrangler secret put REDIS_URL
 # Paste your Upstash REST URL (e.g., https://xxx.upstash.io)
 
-npx wrangler secret put REDIS_TOKEN
+bunx wrangler secret put REDIS_TOKEN
 # Paste your Upstash REST token
 ```
 
 ### 6. Deploy
 
 ```bash
-npm run deploy
+bun run deploy
 ```
 
 Or run locally:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 ## API Usage
@@ -175,30 +166,6 @@ curl -X POST http://localhost:8787/chat \
 ```
 
 Check the `cached` field in responses!
-
-## Performance
-
-- **Cache miss**: ~2-5s (full LLM inference)
-- **Cache hit**: ~200-500ms (embedding + vector search)
-- **Cost savings**: ~90% reduction on cache hits
-
-## Limitations (1-Hour Build)
-
-- Brute-force vector search (not optimized for >1000 entries)
-- No authentication
-- Single model support
-- No streaming responses
-- Basic error handling
-
-## Future Enhancements
-
-- [ ] Implement Redis FT.SEARCH for optimized vector indexes
-- [ ] Add API key authentication
-- [ ] Support multiple models
-- [ ] Streaming support
-- [ ] TTL for cache entries
-- [ ] Advanced analytics dashboard
-- [ ] Rate limiting
 
 ## License
 
