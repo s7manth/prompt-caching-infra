@@ -407,15 +407,14 @@ export default {
           <option value="@cf/meta/llama-2-7b-chat-int8">@cf/meta/llama-2-7b-chat-int8</option>
         </optgroup>
         <optgroup label="OpenAI">
-          <option value="gpt-4o-mini">gpt-4o-mini</option>
-          <option value="gpt-4o">gpt-4o</option>
-          <option value="gpt-4">gpt-4</option>
-          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+          <option value="gpt-5-mini">gpt-5-mini</option>
+          <option value="gpt-5-nano">gpt-5-nano</option>
+          <option value="gpt-5-pro">gpt-5-pro</option>
         </optgroup>
         <optgroup label="Anthropic">
-          <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet-20241022</option>
-          <option value="claude-3-opus-20240229">claude-3-opus-20240229</option>
-          <option value="claude-3-haiku-20240307">claude-3-haiku-20240307</option>
+          <option value="claude-sonnet-4-5-20250929">claude-sonnet-4-5-20250929</option>
+          <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+          <option value="claude-opus-4-1-20250805">claude-opus-4-1-20250805</option>
         </optgroup>
         <optgroup label="Google">
           <option value="gemini-1.5-flash">gemini-1.5-flash</option>
